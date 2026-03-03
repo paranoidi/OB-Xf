@@ -3207,16 +3207,22 @@ float ObxfAudioProcessorEditor::menuScaleFactor() const
     switch (ms)
     {
     case Utils::DONT:
-        return 1;
+        return 1.f;
     case Utils::WITH_OS:
         return utils.getPluginAPIScale();
     case Utils::WITH_PLUGIN:
     {
-        auto psf = std::min(1.f, utils.getPluginAPIScale());
-        return impliedScaleFactor() / psf;
+        const auto s = impliedScaleFactor();
+        if (s <= 1.f)
+            return s;
+        // For plugin-driven zoom, make menus grow more gently than the window
+        // so that high zoom levels (e.g. 200%, 400%) don't produce unusably
+        // large menus. A square-root curve keeps 100% the same, 200% modestly
+        // larger, and 400% around 2x instead of 4x.
+        return std::sqrt(s);
     }
     }
-    return 1;
+    return 1.f;
 }
 
 void ObxfAudioProcessorEditor::keyboardFocusMainMenu()
